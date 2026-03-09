@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAKURA SYSTEM - 今際の国のSAKURA</title>
+    <title>SAKURA SYSTEM - 待機中</title>
     <style>
-        /* 無機質かつサイバーなデザイン（今際の国風） */
+        /* 無機質でサイバーなデザインのCSS */
         body {
             background-color: #000;
             color: #ff0000;
@@ -16,142 +16,83 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
-            overflow: hidden;
-            text-shadow: 0 0 5px #ff0000;
+            text-transform: uppercase;
+            overflow: hidden; /* スクロールバーを隠す */
         }
-
-        /* 画面全体のノイズ風エフェクト */
-        body::before {
-            content: " ";
-            position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
-
         #terminal {
-            width: 85%;
-            max-width: 500px;
-            border: 2px solid #ff0000;
-            padding: 30px;
-            box-shadow: 0 0 20px #ff0000;
-            background: rgba(10, 0, 0, 0.8);
-            z-index: 5;
+            width: 90%;
+            max-width: 600px;
+            border: 1px solid #ff0000;
+            padding: 20px;
+            box-shadow: 0 0 15px #ff0000;
+            background: rgba(10, 0, 0, 0.5); /* ほんのり背景を暗く */
         }
-
-        .status-line { font-size: 0.8rem; margin: 5px 0; color: #800; }
-        h1 { font-size: 1.8rem; margin: 20px 0; letter-spacing: 4px; border-bottom: 1px solid #ff0000; padding-bottom: 10px; }
-        .difficulty { font-size: 1.2rem; margin: 10px 0; font-weight: bold; }
-        .rule-box { background: rgba(255, 0, 0, 0.1); padding: 15px; margin: 20px 0; border-left: 5px solid #ff0000; min-height: 60px; }
-        
-        .blink { animation: blinker 0.8s linear infinite; }
-        @keyframes blinker { 50% { opacity: 0; } }
-
+        h1 {
+            font-size: 2rem;
+            margin: 10px 0 20px 0;
+            letter-spacing: 5px;
+        }
+        .difficulty {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        .instruction {
+            background-color: rgba(255, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
         .btn {
-            width: 100%;
+            background: transparent;
+            color: #ff0000;
+            border: 1px solid #ff0000;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn:active {
             background: #ff0000;
             color: #000;
-            border: none;
-            padding: 15px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            font-family: inherit;
-            cursor: pointer;
-            transition: 0.3s;
-            text-transform: uppercase;
         }
-        .btn:active { background: #800; color: #fff; }
-        .btn:disabled { background: #300; color: #666; cursor: not-allowed; }
-
-        footer { margin-top: 20px; font-size: 0.7rem; color: #400; }
+        .blink {
+            animation: blinker 1s linear infinite;
+        }
+        @keyframes blinker {
+            50% { opacity: 0; }
+        }
     </style>
 </head>
 <body>
-
     <div id="terminal">
-        <div class="status-line">> USER_ID: SAKURA_MEMBER_CHECKED</div>
-        <div class="status-line">> LOCATION: SHINKIBA_FIELD_01</div>
-        <div class="status-line" id="timestamp"></div>
-        
-        <hr style="border: 0.5px solid #400; margin: 15px 0;">
-
-        <div id="display-area">
-            <h1 id="game-title">SYSTEM WAITING</h1>
-            <div class="difficulty" id="game-difficulty">難易度: --</div>
-            <div class="rule-box" id="game-rule">
-                有効なURLパラメータを入力してください。<br>
-                (?g=spade / dia / clover / heart)
-            </div>
+        <p>> SYSTEM CHECK... OK</p>
+        <p>> LOCATION: SHINKIBA</p>
+        <p class="blink">> WAITING FOR GAME DATA...</p>
+        <hr style="border: 0.5px solid #ff0000;">
+        <h1>SYSTEM WAITING</h1>
+        <div class="difficulty">難易度: --</div>
+        <div class="instruction">
+            有効なURLパラメータを入力してください。
+            (?g=spade / dia / clover / heart)
         </div>
-
-        <button class="btn" id="play-btn" onclick="playSystemVoice()">
-            <span class="blink">PLAY SYSTEM VOICE</span>
-        </button>
+        <button class="btn" onclick="playAudio()">NO DATA</button>
     </div>
 
-    <footer>© SAKURA EMERGENCY PROTOCOL</footer>
-
-    <audio id="audio-player"></audio>
+    <audio id="gameVoice" src="voice1.mp3"></audio>
 
     <script>
-        // 1. タイムスタンプ更新
-        document.getElementById('timestamp').innerText = '> TIMESTAMP: ' + new Date().toISOString();
-
-        // 2. ゲームデータの定義（ここを書き換えるだけで調整可能）
-        const gameData = {
-            'spade': {
-                title: '♠ 肉体型：おにごっこ',
-                diff: '♠ 5',
-                rule: 'ハンターにタッチされたら即脱落。制限時間内に陣地へ到達せよ。',
-                audio: 'assets/spade.mp3'
-            },
-            'dia': {
-                title: '♦ 知能型：数字当て',
-                diff: '♦ 7',
-                rule: '提示された論理矛盾を解き、正しい数字を導き出せ。',
-                audio: 'assets/dia.mp3'
-            },
-            'clover': {
-                title: '♣ 協力型：伝言ゲーム',
-                diff: '♣ 4',
-                rule: '喋ることなく、全員の意思をゴールまで繋げ。',
-                audio: 'assets/clover.mp3'
-            },
-            'heart': {
-                title: '♥ 心理型：嘘つき役',
-                diff: '♥ 9',
-                rule: '1人だけ混じっている「嘘つき」を特定せよ。失敗は連帯責任。',
-                audio: 'assets/heart.mp3'
-            }
-        };
-
-        // 3. URLパラメータの解析と反映
-        const urlParams = new URLSearchParams(window.location.search);
-        const mode = urlParams.get('g');
-        const audioPlayer = document.getElementById('audio-player');
-
-        if (mode && gameData[mode]) {
-            const data = gameData[mode];
-            document.getElementById('game-title').innerText = data.title;
-            document.getElementById('game-difficulty').innerText = '難易度: ' + data.diff;
-            document.getElementById('game-rule').innerText = data.rule;
-            audioPlayer.src = data.audio;
-        } else {
-            document.getElementById('play-btn').disabled = true;
-            document.getElementById('play-btn').innerText = "NO DATA";
+        function playAudio() {
+            document.getElementById('gameVoice').play();
         }
-
-        // 4. 音声再生関数
-        function playSystemVoice() {
-            if (audioPlayer.src) {
-                audioPlayer.play().catch(e => {
-                    alert("ブラウザの制限により再生できませんでした。画面をタップしてから再度押してください。");
-                });
-            }
+        // URLパラメータで表示を切り替えるスクリプト
+        const params = new URLSearchParams(window.location.search);
+        const game = params.get('g');
+        if(game === 'spade') {
+            document.querySelector('h1').innerText = '♠ おにごっこ';
+            document.querySelector('.difficulty').innerText = '難易度: ♠ 5';
+            document.querySelector('.instruction').innerText = 'ハンターから逃げ切れ。';
+            document.querySelector('.btn').innerText = 'PLAY VOICE';
         }
+        // 他のゲームも同様に追加可能
     </script>
 </body>
 </html>
