@@ -3,98 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAKURA SYSTEM</title>
+    <title>SYSTEM - NEXT STAGE</title>
     <style>
-        /* 背景白、文字黒の設定 */
+        /* 背景白、文字黒、極太ゴシック */
         body {
             background-color: #ffffff;
             color: #000000;
-            /* メイリオを最優先にし、モダンなゴシック体を指定 */
-            font-family: "Meiryo", "Hiragino Kaku Gothic ProN", "MS PGothic", sans-serif;
+            /* iPhone/Mac/Windowsすべてで極太角ゴシックを優先 */
+            font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Meiryo", "sans-serif";
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
             margin: 0;
-            overflow: hidden;
-            /* 全体的に文字間隔を少し広げて無機質感を出す */
-            letter-spacing: 0.05em;
+            letter-spacing: -0.02em; /* 文字間を詰め気味にして圧力を出す */
         }
 
-        #terminal {
-            width: 80%;
+        #container {
+            width: 85%;
             max-width: 500px;
-            /* 境界線はあえて細く、または無しで「画面感」を出す */
-            border-top: 4px solid #000;
-            padding: 40px 20px;
             text-align: center;
         }
 
-        .status {
-            font-size: 0.7rem;
-            margin-bottom: 30px;
-            font-weight: bold;
-            text-align: left;
-        }
-
-        h1 {
-            font-size: 2.2rem;
-            margin: 20px 0;
-            font-weight: 900; /* 極太 */
-        }
-
+        /* 難易度（画像のように少し小さめ） */
         .difficulty {
-            font-size: 1.4rem;
-            margin-bottom: 30px;
-            font-weight: bold;
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-bottom: 5px;
         }
 
-        .rule-text {
-            font-size: 1.1rem;
-            line-height: 1.8;
-            margin-bottom: 40px;
-            text-align: center;
+        /* メインタイトル（極太） */
+        h1 {
+            font-size: 3.5rem; /* かなり大きく */
+            font-weight: 900;
+            margin: 0 0 40px 0;
+            line-height: 1;
         }
 
-        /* 音声再生ボタンも無機質なデザインに */
+        /* ルール説明（余白を広く） */
+        .rule-box {
+            font-size: 1.2rem;
+            font-weight: 700;
+            line-height: 2.2; /* 行間を広く取ってアリス風に */
+            margin-bottom: 60px;
+            min-height: 150px;
+        }
+
+        /* 操作ボタン */
         .btn {
-            background: #000;
+            background-color: #000;
             color: #fff;
             border: none;
-            padding: 15px 40px;
-            font-size: 0.9rem;
+            padding: 20px 0;
+            width: 100%;
+            font-size: 1.2rem;
+            font-weight: 900;
             cursor: pointer;
-            font-family: inherit;
-            font-weight: bold;
-            letter-spacing: 0.2em;
+            transition: 0.2s;
         }
 
         .btn:active {
-            background: #666;
+            background-color: #444;
         }
 
-        /* 画面がチカチカするノイズ風エフェクト（隠し味） */
-        .scanline {
-            width: 100%;
-            height: 100px;
-            background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.02) 50%, rgba(0,0,0,0) 100%);
-            position: absolute;
-            bottom: 100%;
-            animation: scan 4s linear infinite;
-        }
+        /* 非表示用クラス */
+        .hidden { display: none; }
 
-        @keyframes scan {
-            0% { bottom: 100%; }
-            100% { bottom: -100px; }
-        }
+        /* ゲーム開始後の赤い演出用 */
+        .emergency { color: #ff0000; }
     </style>
 </head>
 <body>
-    <div class="scanline"></div>
-    
-    <div id="terminal">
-        <div class="status">> SYSTEM_STABLE / FIELD: SHINKIBA</div>
-        
-        <div id="content">
-            <h1 id="game-title">げぇむを開始
+
+    <div id="container">
+        <div id="screen-rule">
+            <div class="difficulty" id="display-diff">難易度: --</div>
+            <h1 id="display-title">SYSTEM</h1>
+            <div class="rule-box" id="display-rule">
+                QRコードをスキャンして<br>データを読み込んでください。
+            </div>
+            <button class="btn" onclick="goToNext()">NEXT</button>
+        </div>
+
+        <div id="screen-game" class="hidden">
+            <h1 class="emergency blink">GAME<br>START</h1>
+            <div class="rule-box">
+                制限時間内にクリアせよ。<br>
+                脱落者は即座に排除される。
+            </div>
+            <button class="btn" onclick="location.reload()">BACK TO TOP</button>
+        </div>
+    </div>
+
+    <audio id="gameVoice" src=""></audio>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const g = params.get('g');
+        const audio = document.getElementById('gameVoice');
+
+        const gameData = {
+            'spade': { t: 'おにごっこ', d: '♠ 5', r: 'ハンターから逃げ切れ。<br>制限時間は20分。<br>タッチは「死」を意味する。', s: 'assets/spade.mp3' },
+            'dia':   { t: '数字当て', d: '♦ 7', r: '4つの数字から正解を選べ。<br>誤答は即座に<br>電流が流れる。', s: 'assets/dia.mp3' },
+            'clover': { t: '伝言ゲーム', d: '♣ 4', r: '声を出さずに<br>最後まで繋げ。<br>沈黙が勝利の鍵だ。', s: 'assets/clover.mp3' },
+            'heart': { t: '狼と羊', d: '♥ 9', r: '一人だけが狼になれる。<br>残りの羊は<br>全員死亡する。', s: 'assets/heart.mp3' }
+        };
+
+        // 初期表示設定
+        if(gameData[g]) {
+            document.getElementById('display-title').innerText = gameData[g].t;
+            document.getElementById('display-diff').innerText = '難易度: ' + gameData[g].d;
+            document.getElementById('display-rule').innerHTML = gameData[g].r;
+            audio.src = gameData[g].s;
+        }
+
+        // 次の画面へ行く処理
+        function goToNext() {
+            // 音声を再生
+            if(audio.src) audio.play();
+
+            // 画面を切り替える（DOM操作）
+            document.getElementById('screen-rule').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
