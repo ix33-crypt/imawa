@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAKURA SYSTEM - 今際の国のSAKURA</title>
+    <style>
+        /* 無機質かつサイバーなデザイン（今際の国風） */
+        body {
+            background-color: #000;
+            color: #ff0000;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            text-shadow: 0 0 5px #ff0000;
+        }
+
+        /* 画面全体のノイズ風エフェクト */
+        body::before {
+            content: " ";
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #terminal {
+            width: 85%;
+            max-width: 500px;
+            border: 2px solid #ff0000;
+            padding: 30px;
+            box-shadow: 0 0 20px #ff0000;
+            background: rgba(10, 0, 0, 0.8);
+            z-index: 5;
+        }
+
+        .status-line { font-size: 0.8rem; margin: 5px 0; color: #800; }
+        h1 { font-size: 1.8rem; margin: 20px 0; letter-spacing: 4px; border-bottom: 1px solid #ff0000; padding-bottom: 10px; }
+        .difficulty { font-size: 1.2rem; margin: 10px 0; font-weight: bold; }
+        .rule-box { background: rgba(255, 0, 0, 0.1); padding: 15px; margin: 20px 0; border-left: 5px solid #ff0000; min-height: 60px; }
+        
+        .blink { animation: blinker 0.8s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
+
+        .btn {
+            width: 100%;
+            background: #ff0000;
+            color: #000;
+            border: none;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            font-family: inherit;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+        .btn:active { background: #800; color: #fff; }
+        .btn:disabled { background: #300; color: #666; cursor: not-allowed; }
+
+        footer { margin-top: 20px; font-size: 0.7rem; color: #400; }
+    </style>
+</head>
+<body>
+
+    <div id="terminal">
+        <div class="status-line">> USER_ID: SAKURA_MEMBER_CHECKED</div>
+        <div class="status-line">> LOCATION: SHINKIBA_FIELD_01</div>
+        <div class="status-line" id="timestamp"></div>
+        
+        <hr style="border: 0.5px solid #400; margin: 15px 0;">
+
+        <div id="display-area">
+            <h1 id="game-title">SYSTEM WAITING</h1>
+            <div class="difficulty" id="game-difficulty">難易度: --</div>
+            <div class="rule-box" id="game-rule">
+                有効なURLパラメータを入力してください。<br>
+                (?g=spade / dia / clover / heart)
+            </div>
+        </div>
+
+        <button class="btn" id="play-btn" onclick="playSystemVoice()">
+            <span class="blink">PLAY SYSTEM VOICE</span>
+        </button>
+    </div>
+
+    <footer>© SAKURA EMERGENCY PROTOCOL</footer>
+
+    <audio id="audio-player"></audio>
+
+    <script>
+        // 1. タイムスタンプ更新
+        document.getElementById('timestamp').innerText = '> TIMESTAMP: ' + new Date().toISOString();
+
+        // 2. ゲームデータの定義（ここを書き換えるだけで調整可能）
+        const gameData = {
+            'spade': {
+                title: '♠ 肉体型：おにごっこ',
+                diff: '♠ 5',
+                rule: 'ハンターにタッチされたら即脱落。制限時間内に陣地へ到達せよ。',
+                audio: 'assets/spade.mp3'
+            },
+            'dia': {
+                title: '♦ 知能型：数字当て',
+                diff: '♦ 7',
+                rule: '提示された論理矛盾を解き、正しい数字を導き出せ。',
+                audio: 'assets/dia.mp3'
+            },
+            'clover': {
+                title: '♣ 協力型：伝言ゲーム',
+                diff: '♣ 4',
+                rule: '喋ることなく、全員の意思をゴールまで繋げ。',
+                audio: 'assets/clover.mp3'
+            },
+            'heart': {
+                title: '♥ 心理型：嘘つき役',
+                diff: '♥ 9',
+                rule: '1人だけ混じっている「嘘つき」を特定せよ。失敗は連帯責任。',
+                audio: 'assets/heart.mp3'
+            }
+        };
+
+        // 3. URLパラメータの解析と反映
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('g');
+        const audioPlayer = document.getElementById('audio-player');
+
+        if (mode && gameData[mode]) {
+            const data = gameData[mode];
+            document.getElementById('game-title').innerText = data.title;
+            document.getElementById('game-difficulty').innerText = '難易度: ' + data.diff;
+            document.getElementById('game-rule').innerText = data.rule;
+            audioPlayer.src = data.audio;
+        } else {
+            document.getElementById('play-btn').disabled = true;
+            document.getElementById('play-btn').innerText = "NO DATA";
+        }
+
+        // 4. 音声再生関数
+        function playSystemVoice() {
+            if (audioPlayer.src) {
+                audioPlayer.play().catch(e => {
+                    alert("ブラウザの制限により再生できませんでした。画面をタップしてから再度押してください。");
+                });
+            }
+        }
+    </script>
+</body>
+</html>
